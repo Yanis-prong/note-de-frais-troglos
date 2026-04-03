@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Note de Frais — Troglos</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+  <header>
+    <h1>Note de Frais</h1>
+    <p>Clan Spéléo des Troglodytes · Lyon</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('formulaire', this)">Formulaire</button>
+    <button class="tab" onclick="switchTab('bareme', this)">Barème kilométrique</button>
+  </div>
+
+  <main>
+
+    <div class="tab-content active" id="tab-formulaire">
+
+      <form id="mon-formulaire" action="enregistrer.php" method="POST">
+
+        <div class="bloc">
+          <h2>Identification</h2>
+
+          <label for="nom">Nom du demandeur</label>
+          <input type="text" id="nom" name="nom" placeholder="Prénom Nom" required>
+
+          <label for="date_demande">Date de la demande</label>
+          <input type="date" id="date_demande" name="date_demande" required>
+
+          <label for="raison">Raison de la dépense</label>
+          <textarea id="raison" name="raison" placeholder="ex : WE Ardèche, achat de matériel..."></textarea>
+
+          <label for="budget">Budget</label>
+          <select id="budget" name="budget">
+            <option>Administratif</option>
+            <option>Matériel</option>
+            <option>Sorties</option>
+            <option>Formation</option>
+            <option>Communication</option>
+            <option>Autre</option>
+          </select>
+        </div>
+
+        <div class="bloc">
+          <h2>Dépenses</h2>
+
+          <label for="km">Kilomètres effectués</label>
+          <input type="number" id="km" name="km" placeholder="0" min="0" value="0">
+
+          <label for="peage">Péages / Transports (€)</label>
+          <input type="number" id="peage" name="peage" placeholder="0.00" min="0" step="0.01" value="0">
+
+          <label for="autres">Autres dépenses (€)</label>
+          <input type="number" id="autres" name="autres" placeholder="0.00" min="0" step="0.01" value="0">
+
+          <label>Total estimé</label>
+          <input type="text" id="total_affiche" readonly placeholder="0,00 €">
+          <input type="hidden" id="total" name="total" value="0">
+        </div>
+
+        <div class="bloc">
+          <h2>Règlement</h2>
+
+          <label for="mode">Mode de règlement</label>
+          <select id="mode" name="mode" onchange="afficherChampMode()">
+            <option value="remboursement">Remboursement</option>
+            <option value="abandon">Abandon de frais (déduction fiscale 66%)</option>
+          </select>
+
+          <div id="champ-remboursement">
+            <label for="iban">IBAN</label>
+            <input type="text" id="iban" name="iban" placeholder="FR76 XXXX XXXX XXXX XXXX XXXX XXX">
+          </div>
+
+          <div id="champ-abandon" style="display:none;">
+            <div class="notice" style="margin-top:14px;">
+               Vous bénéficiez d'une <strong>réduction d'impôts de 66%</strong>.
+              Un reçu fiscal vous sera envoyé.
+            </div>
+            <label for="abandon-montant">Montant abandonné (€)</label>
+            <input type="number" id="abandon-montant" name="abandon_montant" step="0.01" placeholder="0.00" oninput="calculerAbandon()">
+
+            <label>Coût réel après déduction fiscale</label>
+            <input type="text" id="abandon-reel" readonly placeholder="0,00 €">
+          </div>
+        </div>
+
+        <div class="bloc">
+          <h2>Signature</h2>
+          <p style="font-size:13px; color:#888; margin-bottom:10px;">
+            Signez dans le cadre ci-dessous avec votre souris ou votre doigt
+          </p>
+          <canvas id="sig-canvas"></canvas>
+          <br>
+          <button type="button" class="btn-effacer" onclick="clearSig()">✕ Effacer la signature</button>
+          <input type="hidden" id="signature" name="signature">
+        </div>
+
+        <div class="boutons-bas">
+          <button type="button" class="btn-pdf" onclick="genererPDF()">Télécharger le PDF</button>
+          <button type="submit" class="btn-save">Envoyer par mail</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="tab-content" id="tab-bareme">
+      <div class="bloc">
+        <h2>Barème kilométrique 2024 — Voitures</h2>
+        <table class="tableau-bareme">
+          <thead>
+            <tr>
+              <th>Puissance fiscale</th>
+              <th>Jusqu'à 5 000 km</th>
+              <th>De 5 001 à 20 000 km</th>
+              <th>Au-delà de 20 000 km</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>3 CV et moins</td><td>d × 0,529</td><td>(d × 0,316) + 1 065</td><td>d × 0,370</td></tr>
+            <tr><td>4 CV</td><td>d × 0,606</td><td>(d × 0,340) + 1 330</td><td>d × 0,407</td></tr>
+            <tr><td>5 CV</td><td>d × 0,636</td><td>(d × 0,357) + 1 395</td><td>d × 0,427</td></tr>
+            <tr><td>6 CV</td><td>d × 0,665</td><td>(d × 0,374) + 1 457</td><td>d × 0,447</td></tr>
+            <tr><td>7 CV et plus</td><td>d × 0,697</td><td>(d × 0,394) + 1 515</td><td>d × 0,470</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="bloc">
+        <h2>Barème kilométrique 2024 — Motos</h2>
+        <table class="tableau-bareme">
+          <thead>
+            <tr>
+              <th>Puissance</th>
+              <th>Jusqu'à 3 000 km</th>
+              <th>De 3 001 à 6 000 km</th>
+              <th>Au-delà de 6 000 km</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>1 ou 2 CV</td><td>d × 0,395</td><td>(d × 0,099) + 891</td><td>d × 0,248</td></tr>
+            <tr><td>3, 4 ou 5 CV</td><td>d × 0,468</td><td>(d × 0,082) + 1 158</td><td>d × 0,275</td></tr>
+            <tr><td>Plus de 5 CV</td><td>d × 0,606</td><td>(d × 0,079) + 1 583</td><td>d × 0,343</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:14px; font-size:13px; color:#666;">
+          <strong>d</strong> = distance totale parcourue dans l'année avec votre véhicule. Consultez le trésorier en cas de doute.
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <div id="modal-mail" class="modal-overlay" style="display:none;">
+    <div class="modal-boite">
+      <h2>Envoyer par mail</h2>
+      <p>Le PDF sera téléchargé et votre client mail s'ouvrira.</p>
+      <label>Votre email</label>
+      <input type="email" id="mail-expediteur" placeholder="vous@exemple.fr">
+      <label>Destinataire</label>
+      <input type="email" id="mail-destinataire" value="yanis.rekik180304@gmail.com">
+      <div style="margin-top:20px; display:flex; gap:10px;">
+        <button class="btn-mail" onclick="envoyerMail()">Envoyer</button>
+        <button class="btn-annuler" onclick="fermerModalMail()">Annuler</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+
+</body>
+</html>
