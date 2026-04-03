@@ -116,14 +116,14 @@ try {
   $mail->isSMTP();
   $mail->Host       = 'smtp.gmail.com';
   $mail->SMTPAuth   = true;
-  $mail->Username   = 'yanis.rekik180304@gmail.com';
-  $mail->Password   = 'nmwhbjikmxwdhmtd';
+  $mail->Username   = GMAIL_USER;
+  $mail->Password   = GMAIL_PASSWORD;
   $mail->SMTPSecure = 'tls';
   $mail->Port       = 587;
   $mail->CharSet    = 'UTF-8';
-  $mail->setFrom('yanis.rekik180304@gmail.com', 'Note de Frais Troglos');
+  $mail->setFrom(GMAIL_USER, 'Note de Frais Troglos');
   $mail->addAddress('yanis.rekik180304@gmail.com');
-  $mail->addCC('yanis.rekik180304@gmail.com');
+  $mail->addCC(GMAIL_USER);
   $mail->Subject = 'Note de Frais - ' . $nom . ' - ' . $date_demande;
   $mail->Body    = "Bonjour,\n\nVeuillez trouver ci-joint la note de frais de $nom.\n\nTotal : $total EUR\nMode : $mode\n\nCordialement,\n$nom";
   $mail->addAttachment($pdf_file, 'Note_de_frais_' . $nom . '_' . $date_demande . '.pdf');
